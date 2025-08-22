@@ -1,74 +1,487 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Code, 
-  Download, 
-  Copy, 
-  CheckCircle, 
-  AlertCircle, 
-  FileText, 
-  Trash2, 
-  Upload,
-  Plus,
-  Edit,
-  Save,
-  X,
-  Table,
-  Zap,
-  Settings,
-  ArrowRight,
-  Database,
-  FileCode
-} from 'lucide-react';
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON Schema Documentation Builder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-const JsonSchemaDocumentationBuilder = () => {
-  const [activeTab, setActiveTab] = useState('builder');
-  const [schemaFields, setSchemaFields] = useState([
-    { 
-      id: 1, 
-      group: 'invoice', 
-      field: 'series', 
-      level: 'root', 
-      mandatory: 'YES', 
-      type: 'string', 
-      length: '50',
-      mydata: 'BT-31',
-      ubl: '', 
-      description: 'Σειρά παραστατικού|Invoice Series',
-      examples: '"Κ"'
-    },
-    { 
-      id: 2, 
-      group: 'invoice', 
-      field: 'number', 
-      level: 'root', 
-      mandatory: 'YES', 
-      type: 'string', 
-      length: '100',
-      mydata: 'BT-32',
-      ubl: '', 
-      description: 'Αριθμός Παραστατικού|Invoice Number',
-      examples: '"000002"'
-    }
-  ]);
-  
-  const [inputJson, setInputJson] = useState('');
-  const [outputJsonc, setOutputJsonc] = useState('');
-  const [isEditing, setIsEditing] = useState(null);
-  const [newField, setNewField] = useState({
-    group: '',
-    field: '',
-    level: 'root',
-    mandatory: 'YES',
-    type: 'string',
-    ubl: '',
-    description: '',
-    examples: ''
-  });
-  const [searchTerm, setSearchTerm] = useState('');
-  const [copied, setCopied] = useState('');
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8fafc;
+            line-height: 1.6;
+        }
 
-  // Sample JSON για testing
-  const sampleJson = `{
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 24px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            opacity: 0.9;
+        }
+
+        .tabs {
+            display: flex;
+            background-color: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .tab {
+            padding: 16px 24px;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            font-weight: 500;
+            color: #64748b;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            color: #1e293b;
+            background-color: #f1f5f9;
+        }
+
+        .tab.active {
+            color: #4f46e5;
+            border-bottom-color: #4f46e5;
+            background-color: white;
+        }
+
+        .tab-content {
+            padding: 24px;
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-section {
+            background-color: #f8fafc;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+        }
+
+        .form-section h4 {
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .input, .select {
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .input:focus, .select:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background-color: #4f46e5;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #4338ca;
+        }
+
+        .btn-success {
+            background-color: #059669;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #047857;
+        }
+
+        .btn-danger {
+            background-color: #dc2626;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #b91c1c;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 24px;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #d1d5db;
+        }
+
+        .table th {
+            background-color: #1f2937;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .table td {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .table tr:hover {
+            background-color: #f9fafb;
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-green {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-yellow {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-orange {
+            background-color: #fed7aa;
+            color: #c2410c;
+        }
+
+        .code {
+            background-color: #f3f4f6;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+
+        .json-area {
+            width: 100%;
+            height: 400px;
+            padding: 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            resize: vertical;
+        }
+
+        .json-output {
+            height: 400px;
+            padding: 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background-color: #f9fafb;
+            overflow: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .toolbar-group {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .search-input {
+            max-width: 300px;
+            margin-bottom: 16px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+
+        .field-code {
+            font-family: 'Courier New', monospace;
+            color: #2563eb;
+        }
+
+        .mydata-code {
+            font-family: 'Courier New', monospace;
+            color: #7c3aed;
+        }
+
+        .example-code {
+            font-family: 'Courier New', monospace;
+            color: #059669;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon {
+            width: 16px;
+            height: 16px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .edit-row input, .edit-row select {
+            width: 100%;
+            padding: 4px 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <!-- Header -->
+            <div class="header">
+                <h1>Dynamic JSON Schema Documentation Builder</h1>
+                <p>Δημιούργησε schema documentation και automatic JSON comments</p>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('builder')">
+                    📋 Schema Builder
+                </button>
+                <button class="tab" onclick="switchTab('processor')">
+                    💻 JSON Processor
+                </button>
+                <button class="tab" onclick="switchTab('preview')">
+                    📄 Documentation
+                </button>
+            </div>
+
+            <!-- Schema Builder Tab -->
+            <div id="builder" class="tab-content active">
+                <div class="toolbar">
+                    <h3>Schema Documentation Builder</h3>
+                    <div class="toolbar-group">
+                        <button class="btn btn-primary" onclick="exportSchema()">
+                            💾 Export Schema
+                        </button>
+                    </div>
+                </div>
+
+                <input type="text" id="searchInput" class="input search-input" placeholder="Αναζήτηση fields..." oninput="filterFields()">
+
+                <!-- Add New Field Form -->
+                <div class="form-section">
+                    <h4>Προσθήκη νέου field</h4>
+                    <div class="form-grid">
+                        <input type="text" id="newGroup" class="input" placeholder="Group">
+                        <input type="text" id="newField" class="input" placeholder="JSON Field Name">
+                        <select id="newMandatory" class="select">
+                            <option value="YES">✅ Mandatory</option>
+                            <option value="NO">🟡 Optional</option>
+                            <option value="SPECIAL">⚠️ Special</option>
+                        </select>
+                        <select id="newType" class="select">
+                            <option value="string">string</option>
+                            <option value="number">number</option>
+                            <option value="boolean">boolean</option>
+                            <option value="object">object</option>
+                            <option value="array">array</option>
+                        </select>
+                    </div>
+                    <div class="form-grid">
+                        <input type="text" id="newLength" class="input" placeholder="Length">
+                        <input type="text" id="newMydata" class="input" placeholder="MyData Code">
+                        <input type="text" id="newUbl" class="input" placeholder="UBL Code">
+                        <input type="text" id="newDescription" class="input" placeholder="Greek|English Description">
+                        <input type="text" id="newExamples" class="input" placeholder="Example value">
+                    </div>
+                    <button class="btn btn-success" onclick="addNewField()">
+                        ➕ Προσθήκη Field
+                    </button>
+                </div>
+
+                <!-- Fields Table -->
+                <div class="table-container">
+                    <table class="table" id="fieldsTable">
+                        <thead>
+                            <tr>
+                                <th>Group</th>
+                                <th>JSON Field</th>
+                                <th>Level</th>
+                                <th>Mandatory</th>
+                                <th>Type</th>
+                                <th>Length</th>
+                                <th>MyData</th>
+                                <th>UBL</th>
+                                <th>Description</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fieldsTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- JSON Processor Tab -->
+            <div id="processor" class="tab-content">
+                <div class="toolbar">
+                    <h3>JSON Comment Generator</h3>
+                    <div class="toolbar-group">
+                        <button class="btn btn-primary" onclick="loadSampleData()">
+                            🗃️ Load Sample
+                        </button>
+                        <button class="btn btn-primary" onclick="copyOutput()">
+                            📋 Copy Output
+                        </button>
+                        <button class="btn btn-success" onclick="downloadCommentedJson()">
+                            💾 Download JSONC
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <div>
+                        <h4 style="margin-bottom: 16px;">Input JSON</h4>
+                        <textarea id="inputJson" class="json-area" placeholder="Paste your JSON here..." oninput="generateComments()"></textarea>
+                    </div>
+                    <div>
+                        <h4 style="margin-bottom: 16px;">Output JSONC (with Comments)</h4>
+                        <div id="outputJsonc" class="json-output"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Documentation Preview Tab -->
+            <div id="preview" class="tab-content">
+                <h3 style="margin-bottom: 24px;">Schema Documentation Preview</h3>
+                <div id="documentationContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let schemaFields = [
+            {
+                id: 1,
+                group: 'invoice',
+                field: 'series',
+                level: 'root',
+                mandatory: 'YES',
+                type: 'string',
+                length: '50',
+                mydata: 'BT-31',
+                ubl: '',
+                description: 'Σειρά παραστατικού|Invoice Series',
+                examples: '"Κ"'
+            },
+            {
+                id: 2,
+                group: 'invoice',
+                field: 'number',
+                level: 'root',
+                mandatory: 'YES',
+                type: 'string',
+                length: '100',
+                mydata: 'BT-32',
+                ubl: '',
+                description: 'Αριθμός Παραστατικού|Invoice Number',
+                examples: '"000002"'
+            }
+        ];
+
+        let editingId = null;
+        let nextId = 3;
+
+        const sampleJson = `{
   "series": "Κ",
   "number": "000002",
   "dateIssued": "2024-07-17T23:27:23",
@@ -102,570 +515,378 @@ const JsonSchemaDocumentationBuilder = () => {
   ]
 }`;
 
-  useEffect(() => {
-    if (inputJson) {
-      generateCommentedJson();
-    }
-  }, [inputJson, schemaFields]);
+        // Tab switching
+        function switchTab(tabName) {
+            // Hide all tab contents
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => content.classList.remove('active'));
 
-  // Generate commented JSON based on schema
-  const generateCommentedJson = () => {
-    try {
-      const parsed = JSON.parse(inputJson);
-      const commented = addCommentsToJson(parsed, '', 0);
-      setOutputJsonc(commented);
-    } catch (error) {
-      console.error('JSON parsing error:', error);
-    }
-  };
+            // Remove active class from all tabs
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
 
-  // Recursively add comments to JSON
-  const addCommentsToJson = (obj, path = '', level = 0) => {
-    const indent = '  '.repeat(level);
-    const nextIndent = '  '.repeat(level + 1);
-    
-    if (Array.isArray(obj)) {
-      let result = '[\n';
-      obj.forEach((item, index) => {
-        result += nextIndent + addCommentsToJson(item, `${path}[${index}]`, level + 1);
-        if (index < obj.length - 1) result += ',';
-        result += '\n';
-      });
-      result += indent + ']';
-      return result;
-    }
-    
-    if (typeof obj === 'object' && obj !== null) {
-      let result = '{\n';
-      const keys = Object.keys(obj);
-      
-      keys.forEach((key, index) => {
-        const currentPath = path ? `${path}.${key}` : key;
-        const fieldInfo = findFieldInfo(key, currentPath);
-        
-        // Add comment for this field
-        if (fieldInfo) {
-          const mandatoryIcon = fieldInfo.mandatory === 'YES' ? '✅' : 
-                               fieldInfo.mandatory === 'NO' ? '🟡' : '⚠️';
-          result += nextIndent + `// ${mandatoryIcon} ${fieldInfo.description}\n`;
-          if (fieldInfo.ubl) {
-            result += nextIndent + `// UBL: ${fieldInfo.ubl}\n`;
-          }
-          if (fieldInfo.examples) {
-            result += nextIndent + `// Example: ${fieldInfo.examples}\n`;
-          }
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+
+            // Refresh content if needed
+            if (tabName === 'preview') {
+                generateDocumentation();
+            }
         }
-        
-        result += nextIndent + `"${key}": ${addCommentsToJson(obj[key], currentPath, level + 1)}`;
-        if (index < keys.length - 1) result += ',';
-        result += '\n';
-      });
-      
-      result += indent + '}';
-      return result;
-    }
-    
-    // Primitive values
-    return JSON.stringify(obj);
-  };
 
-  // Find field information from schema
-  const findFieldInfo = (fieldName, fullPath) => {
-    // Try exact field match first
-    let found = schemaFields.find(f => f.field === fieldName);
-    
-    // If not found, try partial path matching
-    if (!found) {
-      found = schemaFields.find(f => {
-        const pathParts = fullPath.split('.');
-        return pathParts.includes(f.field) || f.field.includes(fieldName);
-      });
-    }
-    
-    return found;
-  };
+        // Add new field
+        function addNewField() {
+            const group = document.getElementById('newGroup').value;
+            const field = document.getElementById('newField').value;
+            const mandatory = document.getElementById('newMandatory').value;
+            const type = document.getElementById('newType').value;
+            const length = document.getElementById('newLength').value;
+            const mydata = document.getElementById('newMydata').value;
+            const ubl = document.getElementById('newUbl').value;
+            const description = document.getElementById('newDescription').value;
+            const examples = document.getElementById('newExamples').value;
 
-  // Add new field to schema
-  const addNewField = () => {
-    const id = Math.max(...schemaFields.map(f => f.id), 0) + 1;
-    setSchemaFields([...schemaFields, { ...newField, id }]);
-    setNewField({
-      group: '',
-      field: '',
-      level: 'root',
-      mandatory: 'YES',
-      type: 'string',
-      ubl: '',
-      description: '',
-      examples: ''
-    });
-  };
+            if (!field || !description) {
+                alert('Παρακαλώ συμπληρώστε τουλάχιστον το JSON Field και το Description');
+                return;
+            }
 
-  // Edit field
-  const startEdit = (field) => {
-    setIsEditing(field.id);
-  };
+            const newField = {
+                id: nextId++,
+                group,
+                field,
+                level: 'root',
+                mandatory,
+                type,
+                length,
+                mydata,
+                ubl,
+                description,
+                examples
+            };
 
-  const saveEdit = (id, updatedField) => {
-    setSchemaFields(schemaFields.map(f => f.id === id ? { ...f, ...updatedField } : f));
-    setIsEditing(null);
-  };
+            schemaFields.push(newField);
+            clearNewFieldForm();
+            renderFieldsTable();
+        }
 
-  // Delete field
-  const deleteField = (id) => {
-    setSchemaFields(schemaFields.filter(f => f.id !== id));
-  };
+        // Clear form
+        function clearNewFieldForm() {
+            document.getElementById('newGroup').value = '';
+            document.getElementById('newField').value = '';
+            document.getElementById('newMandatory').value = 'YES';
+            document.getElementById('newType').value = 'string';
+            document.getElementById('newLength').value = '';
+            document.getElementById('newMydata').value = '';
+            document.getElementById('newUbl').value = '';
+            document.getElementById('newDescription').value = '';
+            document.getElementById('newExamples').value = '';
+        }
 
-  // Filter fields based on search
-  const filteredFields = schemaFields.filter(field =>
-    field.field.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    field.group.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    field.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  // Copy to clipboard
-  const copyToClipboard = async (text, type) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(type);
-      setTimeout(() => setCopied(''), 2000);
-    } catch (err) {
-      console.error('Failed to copy:', err);
-    }
-  };
-
-  // Download functions
-  const downloadSchema = () => {
-    const blob = new Blob([JSON.stringify(schemaFields, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'schema-documentation.json';
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const downloadCommentedJson = () => {
-    const blob = new Blob([outputJsonc], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'commented-schema.jsonc';
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  // Load sample data
-  const loadSampleData = () => {
-    setInputJson(sampleJson);
-  };
-
-  const tabs = [
-    { id: 'builder', label: 'Schema Builder', icon: Table },
-    { id: 'processor', label: 'JSON Processor', icon: Code },
-    { id: 'preview', label: 'Documentation', icon: FileText }
-  ];
-
-  return (
-    <div className="w-full max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
-      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6">
-          <h1 className="text-2xl font-bold mb-2">Dynamic JSON Schema Documentation Builder</h1>
-          <p className="text-indigo-100">Δημιούργησε schema documentation και automatic JSON comments</p>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex border-b bg-gray-50">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-6 py-4 font-medium border-b-2 transition-colors ${
-                  activeTab === tab.id
-                    ? 'border-indigo-600 text-indigo-600 bg-white'
-                    : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                }`}
-              >
-                <Icon size={16} />
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Schema Builder Tab */}
-        {activeTab === 'builder' && (
-          <div className="p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-semibold">Schema Documentation Builder</h3>
-              <div className="flex gap-3">
-                <button
-                  onClick={downloadSchema}
-                  className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700"
-                >
-                  <Download size={16} />
-                  Export Schema
-                </button>
-              </div>
-            </div>
-
-            {/* Search */}
-            <div className="mb-4">
-              <input
-                type="text"
-                placeholder="Αναζήτηση fields..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full max-w-md px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              />
-            </div>
-
-            {/* Add New Field Form */}
-            <div className="bg-gray-50 p-4 rounded-lg mb-6">
-              <h4 className="font-medium mb-3">Προσθήκη νέου field</h4>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-                <input
-                  type="text"
-                  placeholder="Group"
-                  value={newField.group}
-                  onChange={(e) => setNewField({...newField, group: e.target.value})}
-                  className="px-3 py-2 border rounded focus:ring-2 focus:ring-indigo-500"
-                />
-                <input
-                  type="text"
-                  placeholder="Field Name"
-                  value={newField.field}
-                  onChange={(e) => setNewField({...newField, field: e.target.value})}
-                  className="px-3 py-2 border rounded focus:ring-2 focus:ring-indigo-500"
-                />
-                <select
-                  value={newField.mandatory}
-                  onChange={(e) => setNewField({...newField, mandatory: e.target.value})}
-                  className="px-3 py-2 border rounded focus:ring-2 focus:ring-indigo-500"
-                >
-                  <option value="YES">✅ Mandatory</option>
-                  <option value="NO">🟡 Optional</option>
-                  <option value="SPECIAL">⚠️ Special</option>
-                </select>
-                <select
-                  value={newField.type}
-                  onChange={(e) => setNewField({...newField, type: e.target.value})}
-                  className="px-3 py-2 border rounded focus:ring-2 focus:ring-indigo-500"
-                >
-                  <option value="string">string</option>
-                  <option value="number">number</option>
-                  <option value="boolean">boolean</option>
-                  <option value="object">object</option>
-                  <option value="array">array</option>
-                </select>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-                <input
-                  type="text"
-                  placeholder="UBL Code"
-                  value={newField.ubl}
-                  onChange={(e) => setNewField({...newField, ubl: e.target.value})}
-                  className="px-3 py-2 border rounded focus:ring-2 focus:ring-indigo-500"
-                />
-                <input
-                  type="text"
-                  placeholder="Greek|English Description"
-                  value={newField.description}
-                  onChange={(e) => setNewField({...newField, description: e.target.value})}
-                  className="px-3 py-2 border rounded focus:ring-2 focus:ring-indigo-500"
-                />
-                <input
-                  type="text"
-                  placeholder="Example value"
-                  value={newField.examples}
-                  onChange={(e) => setNewField({...newField, examples: e.target.value})}
-                  className="px-3 py-2 border rounded focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-              <button
-                onClick={addNewField}
-                disabled={!newField.field || !newField.description}
-                className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50"
-              >
-                <Plus size={16} />
-                Προσθήκη Field
-              </button>
-            </div>
-
-            {/* Fields Table */}
-            <div className="overflow-x-auto">
-              <table className="w-full border border-gray-300">
-                <thead className="bg-gray-800 text-white">
-                  <tr>
-                    <th className="p-3 text-left">Group</th>
-                    <th className="p-3 text-left">Field</th>
-                    <th className="p-3 text-left">Level</th>
-                    <th className="p-3 text-left">Mandatory</th>
-                    <th className="p-3 text-left">Type</th>
-                    <th className="p-3 text-left">UBL</th>
-                    <th className="p-3 text-left">Description</th>
-                    <th className="p-3 text-left">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredFields.map((field) => (
-                    <tr key={field.id} className="border-b hover:bg-gray-50">
-                      {isEditing === field.id ? (
-                        <EditableRow 
-                          field={field} 
-                          onSave={(updated) => saveEdit(field.id, updated)}
-                          onCancel={() => setIsEditing(null)}
-                        />
-                      ) : (
-                        <>
-                          <td className="p-3 font-medium text-gray-900">{field.group}</td>
-                          <td className="p-3 font-mono text-blue-600">{field.field}</td>
-                          <td className="p-3">{field.level}</td>
-                          <td className="p-3">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              field.mandatory === 'YES' ? 'bg-green-100 text-green-800' :
-                              field.mandatory === 'NO' ? 'bg-yellow-100 text-yellow-800' :
-                              'bg-orange-100 text-orange-800'
-                            }`}>
-                              {field.mandatory === 'YES' ? '✅ YES' : 
-                               field.mandatory === 'NO' ? '🟡 NO' : '⚠️ SPECIAL'}
-                            </span>
-                          </td>
-                          <td className="p-3">
-                            <code className="bg-gray-100 px-2 py-1 rounded text-sm">{field.type}</code>
-                          </td>
-                          <td className="p-3 text-sm">{field.ubl}</td>
-                          <td className="p-3 text-sm max-w-xs truncate" title={field.description}>
-                            {field.description}
-                          </td>
-                          <td className="p-3">
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => startEdit(field)}
-                                className="text-blue-600 hover:text-blue-800"
-                              >
-                                <Edit size={16} />
-                              </button>
-                              <button
-                                onClick={() => deleteField(field.id)}
-                                className="text-red-600 hover:text-red-800"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </div>
-                          </td>
-                        </>
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* JSON Processor Tab */}
-        {activeTab === 'processor' && (
-          <div className="p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-semibold">JSON Comment Generator</h3>
-              <div className="flex gap-3">
-                <button
-                  onClick={loadSampleData}
-                  className="flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
-                >
-                  <Database size={16} />
-                  Load Sample
-                </button>
-                <button
-                  onClick={() => copyToClipboard(outputJsonc, 'output')}
-                  className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700"
-                >
-                  <Copy size={16} />
-                  {copied === 'output' ? 'Copied!' : 'Copy Output'}
-                </button>
-                <button
-                  onClick={downloadCommentedJson}
-                  className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
-                >
-                  <Download size={16} />
-                  Download JSONC
-                </button>
-              </div>
-            </div>
-
-            <div className="grid lg:grid-cols-2 gap-6">
-              {/* Input JSON */}
-              <div className="space-y-4">
-                <h4 className="font-semibold">Input JSON</h4>
-                <textarea
-                  value={inputJson}
-                  onChange={(e) => setInputJson(e.target.value)}
-                  placeholder="Paste your JSON here..."
-                  className="w-full h-96 p-4 border rounded-lg font-mono text-sm resize-none focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-
-              {/* Output JSONC */}
-              <div className="space-y-4">
-                <h4 className="font-semibold">Output JSONC (with Comments)</h4>
-                <div className="h-96 p-4 border rounded-lg bg-gray-50 overflow-auto">
-                  <pre className="font-mono text-sm text-gray-800 whitespace-pre-wrap">{outputJsonc}</pre>
-                </div>
-              </div>
-            </div>
-
-            {/* Processing Info */}
-            <div className="mt-6 bg-blue-50 p-4 rounded-lg">
-              <h4 className="font-medium text-blue-900 mb-2">Πώς λειτουργεί το Comment Generation</h4>
-              <div className="text-sm text-blue-800 space-y-1">
-                <p>• Αναλύει το JSON structure και ψάχνει matching fields στο schema</p>
-                <p>• Προσθέτει comments με mandatory indicators (✅🟡⚠️)</p>
-                <p>• Συμπεριλαμβάνει descriptions, UBL codes, και examples</p>
-                <p>• Διατηρεί το formatting και τη δομή του αρχικού JSON</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Documentation Preview Tab */}
-        {activeTab === 'preview' && (
-          <div className="p-6">
-            <h3 className="text-xl font-semibold mb-6">Schema Documentation Preview</h3>
+        // Render fields table
+        function renderFieldsTable() {
+            const tbody = document.getElementById('fieldsTableBody');
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             
-            <div className="prose max-w-none">
-              <h2>API Schema Documentation</h2>
-              <p>Automatically generated from schema definition.</p>
-              
-              {/* Group fields by group */}
-              {[...new Set(schemaFields.map(f => f.group))].map(group => (
-                <div key={group} className="mb-8">
-                  <h3 className="capitalize font-semibold text-lg border-b pb-2">{group}</h3>
-                  <div className="mt-4 overflow-x-auto">
-                    <table className="w-full border border-gray-300 text-sm">
-                      <thead className="bg-gray-100">
-                        <tr>
-                          <th className="p-2 text-left">Field</th>
-                          <th className="p-2 text-left">Required</th>
-                          <th className="p-2 text-left">Type</th>
-                          <th className="p-2 text-left">Description</th>
-                          <th className="p-2 text-left">Example</th>
+            const filteredFields = schemaFields.filter(field =>
+                field.field.toLowerCase().includes(searchTerm) ||
+                field.group.toLowerCase().includes(searchTerm) ||
+                field.description.toLowerCase().includes(searchTerm)
+            );
+
+            tbody.innerHTML = '';
+
+            filteredFields.forEach(field => {
+                const row = document.createElement('tr');
+                
+                if (editingId === field.id) {
+                    row.className = 'edit-row';
+                    row.innerHTML = `
+                        <td><input type="text" value="${field.group}" id="edit-group-${field.id}"></td>
+                        <td><input type="text" value="${field.field}" id="edit-field-${field.id}"></td>
+                        <td><input type="text" value="${field.level}" id="edit-level-${field.id}"></td>
+                        <td>
+                            <select id="edit-mandatory-${field.id}">
+                                <option value="YES" ${field.mandatory === 'YES' ? 'selected' : ''}>✅ YES</option>
+                                <option value="NO" ${field.mandatory === 'NO' ? 'selected' : ''}>🟡 NO</option>
+                                <option value="SPECIAL" ${field.mandatory === 'SPECIAL' ? 'selected' : ''}>⚠️ SPECIAL</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select id="edit-type-${field.id}">
+                                <option value="string" ${field.type === 'string' ? 'selected' : ''}>string</option>
+                                <option value="number" ${field.type === 'number' ? 'selected' : ''}>number</option>
+                                <option value="boolean" ${field.type === 'boolean' ? 'selected' : ''}>boolean</option>
+                                <option value="object" ${field.type === 'object' ? 'selected' : ''}>object</option>
+                                <option value="array" ${field.type === 'array' ? 'selected' : ''}>array</option>
+                            </select>
+                        </td>
+                        <td><input type="text" value="${field.length}" id="edit-length-${field.id}"></td>
+                        <td><input type="text" value="${field.mydata}" id="edit-mydata-${field.id}"></td>
+                        <td><input type="text" value="${field.ubl}" id="edit-ubl-${field.id}"></td>
+                        <td><input type="text" value="${field.description}" id="edit-description-${field.id}"></td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="btn btn-success" onclick="saveEdit(${field.id})">💾</button>
+                                <button class="btn" onclick="cancelEdit()">❌</button>
+                            </div>
+                        </td>
+                    `;
+                } else {
+                    const mandatoryBadge = field.mandatory === 'YES' ? 
+                        '<span class="badge badge-green">✅ YES</span>' :
+                        field.mandatory === 'NO' ?
+                        '<span class="badge badge-yellow">🟡 NO</span>' :
+                        '<span class="badge badge-orange">⚠️ SPECIAL</span>';
+
+                    row.innerHTML = `
+                        <td>${field.group}</td>
+                        <td class="field-code">${field.field}</td>
+                        <td>${field.level}</td>
+                        <td>${mandatoryBadge}</td>
+                        <td><span class="code">${field.type}</span></td>
+                        <td>${field.length}</td>
+                        <td class="mydata-code">${field.mydata}</td>
+                        <td>${field.ubl}</td>
+                        <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;" title="${field.description}">${field.description}</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="btn btn-primary" onclick="startEdit(${field.id})">✏️</button>
+                                <button class="btn btn-danger" onclick="deleteField(${field.id})">🗑️</button>
+                            </div>
+                        </td>
+                    `;
+                }
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        // Edit functions
+        function startEdit(id) {
+            editingId = id;
+            renderFieldsTable();
+        }
+
+        function saveEdit(id) {
+            const field = schemaFields.find(f => f.id === id);
+            field.group = document.getElementById(`edit-group-${id}`).value;
+            field.field = document.getElementById(`edit-field-${id}`).value;
+            field.level = document.getElementById(`edit-level-${id}`).value;
+            field.mandatory = document.getElementById(`edit-mandatory-${id}`).value;
+            field.type = document.getElementById(`edit-type-${id}`).value;
+            field.length = document.getElementById(`edit-length-${id}`).value;
+            field.mydata = document.getElementById(`edit-mydata-${id}`).value;
+            field.ubl = document.getElementById(`edit-ubl-${id}`).value;
+            field.description = document.getElementById(`edit-description-${id}`).value;
+            
+            editingId = null;
+            renderFieldsTable();
+        }
+
+        function cancelEdit() {
+            editingId = null;
+            renderFieldsTable();
+        }
+
+        function deleteField(id) {
+            if (confirm('Είστε σίγουροι ότι θέλετε να διαγράψετε αυτό το field;')) {
+                schemaFields = schemaFields.filter(f => f.id !== id);
+                renderFieldsTable();
+            }
+        }
+
+        // Filter fields
+        function filterFields() {
+            renderFieldsTable();
+        }
+
+        // JSON processing
+        function generateComments() {
+            const inputJson = document.getElementById('inputJson').value;
+            if (!inputJson.trim()) {
+                document.getElementById('outputJsonc').textContent = '';
+                return;
+            }
+
+            try {
+                const parsed = JSON.parse(inputJson);
+                const commented = addCommentsToJson(parsed, '', 0);
+                document.getElementById('outputJsonc').textContent = commented;
+            } catch (error) {
+                document.getElementById('outputJsonc').textContent = 'JSON Error: ' + error.message;
+            }
+        }
+
+        function addCommentsToJson(obj, path = '', level = 0) {
+            const indent = '  '.repeat(level);
+            const nextIndent = '  '.repeat(level + 1);
+            
+            if (Array.isArray(obj)) {
+                let result = '[\n';
+                obj.forEach((item, index) => {
+                    result += nextIndent + addCommentsToJson(item, `${path}[${index}]`, level + 1);
+                    if (index < obj.length - 1) result += ',';
+                    result += '\n';
+                });
+                result += indent + ']';
+                return result;
+            }
+            
+            if (typeof obj === 'object' && obj !== null) {
+                let result = '{\n';
+                const keys = Object.keys(obj);
+                
+                keys.forEach((key, index) => {
+                    const currentPath = path ? `${path}.${key}` : key;
+                    const fieldInfo = findFieldInfo(key, currentPath);
+                    
+                    // Add comment for this field
+                    if (fieldInfo) {
+                        const mandatoryIcon = fieldInfo.mandatory === 'YES' ? '✅' : 
+                                           fieldInfo.mandatory === 'NO' ? '🟡' : '⚠️';
+                        result += nextIndent + `// ${mandatoryIcon} ${fieldInfo.description}\n`;
+                        if (fieldInfo.length) {
+                            result += nextIndent + `// Length: ${fieldInfo.length}\n`;
+                        }
+                        if (fieldInfo.mydata) {
+                            result += nextIndent + `// MyData: ${fieldInfo.mydata}\n`;
+                        }
+                        if (fieldInfo.ubl) {
+                            result += nextIndent + `// UBL: ${fieldInfo.ubl}\n`;
+                        }
+                        if (fieldInfo.examples) {
+                            result += nextIndent + `// Example: ${fieldInfo.examples}\n`;
+                        }
+                    }
+                    
+                    result += nextIndent + `"${key}": ${addCommentsToJson(obj[key], currentPath, level + 1)}`;
+                    if (index < keys.length - 1) result += ',';
+                    result += '\n';
+                });
+                
+                result += indent + '}';
+                return result;
+            }
+            
+            // Primitive values
+            return JSON.stringify(obj);
+        }
+
+        function findFieldInfo(fieldName, fullPath) {
+            // Try exact field match first
+            let found = schemaFields.find(f => f.field === fieldName);
+            
+            // If not found, try partial path matching
+            if (!found) {
+                found = schemaFields.find(f => {
+                    const pathParts = fullPath.split('.');
+                    return pathParts.includes(f.field) || f.field.includes(fieldName);
+                });
+            }
+            
+            return found;
+        }
+
+        function loadSampleData() {
+            document.getElementById('inputJson').value = sampleJson;
+            generateComments();
+        }
+
+        function copyOutput() {
+            const output = document.getElementById('outputJsonc').textContent;
+            navigator.clipboard.writeText(output).then(() => {
+                alert('Copied to clipboard!');
+            });
+        }
+
+        function downloadCommentedJson() {
+            const output = document.getElementById('outputJsonc').textContent;
+            const blob = new Blob([output], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'commented-schema.jsonc';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Export schema
+        function exportSchema() {
+            const blob = new Blob([JSON.stringify(schemaFields, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'schema-documentation.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Generate documentation
+        function generateDocumentation() {
+            const content = document.getElementById('documentationContent');
+            const groups = [...new Set(schemaFields.map(f => f.group))];
+            
+            let html = '<h2>API Schema Documentation</h2><p>Automatically generated from schema definition.</p>';
+            
+            groups.forEach(group => {
+                if (!group) return;
+                
+                html += `
+                    <div style="margin-bottom: 32px;">
+                        <h3 style="text-transform: capitalize; font-weight: 600; font-size: 18px; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px;">${group}</h3>
+                        <div style="margin-top: 16px; overflow-x: auto;">
+                            <table class="table" style="font-size: 14px;">
+                                <thead style="background-color: #f3f4f6;">
+                                    <tr>
+                                        <th style="padding: 8px;">JSON Field</th>
+                                        <th style="padding: 8px;">Required</th>
+                                        <th style="padding: 8px;">Type</th>
+                                        <th style="padding: 8px;">Length</th>
+                                        <th style="padding: 8px;">MyData</th>
+                                        <th style="padding: 8px;">Description</th>
+                                        <th style="padding: 8px;">Example</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                `;
+                
+                schemaFields.filter(f => f.group === group).forEach(field => {
+                    const requiredIcon = field.mandatory === 'YES' ? '✅' : 
+                                       field.mandatory === 'NO' ? '🟡' : '⚠️';
+                    
+                    html += `
+                        <tr style="border-bottom: 1px solid #e5e7eb;">
+                            <td style="padding: 8px;" class="field-code">${field.field}</td>
+                            <td style="padding: 8px;">${requiredIcon}</td>
+                            <td style="padding: 8px;"><span class="code">${field.type}</span></td>
+                            <td style="padding: 8px;">${field.length}</td>
+                            <td style="padding: 8px;" class="mydata-code">${field.mydata}</td>
+                            <td style="padding: 8px;">${field.description}</td>
+                            <td style="padding: 8px;" class="example-code">${field.examples}</td>
                         </tr>
-                      </thead>
-                      <tbody>
-                        {schemaFields.filter(f => f.group === group).map(field => (
-                          <tr key={field.id} className="border-b">
-                            <td className="p-2 font-mono text-blue-600">{field.field}</td>
-                            <td className="p-2">
-                              {field.mandatory === 'YES' ? '✅' : 
-                               field.mandatory === 'NO' ? '🟡' : '⚠️'}
-                            </td>
-                            <td className="p-2">
-                              <code className="bg-gray-100 px-1 rounded">{field.type}</code>
-                            </td>
-                            <td className="p-2">{field.description}</td>
-                            <td className="p-2 font-mono text-green-600">{field.examples}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
+                    `;
+                });
+                
+                html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            content.innerHTML = html;
+        }
 
-// Editable Row Component
-const EditableRow = ({ field, onSave, onCancel }) => {
-  const [editData, setEditData] = useState(field);
-
-  return (
-    <>
-      <td className="p-3">
-        <input
-          value={editData.group}
-          onChange={(e) => setEditData({...editData, group: e.target.value})}
-          className="w-full px-2 py-1 border rounded text-sm"
-        />
-      </td>
-      <td className="p-3">
-        <input
-          value={editData.field}
-          onChange={(e) => setEditData({...editData, field: e.target.value})}
-          className="w-full px-2 py-1 border rounded text-sm font-mono"
-        />
-      </td>
-      <td className="p-3">
-        <input
-          value={editData.level}
-          onChange={(e) => setEditData({...editData, level: e.target.value})}
-          className="w-full px-2 py-1 border rounded text-sm"
-        />
-      </td>
-      <td className="p-3">
-        <select
-          value={editData.mandatory}
-          onChange={(e) => setEditData({...editData, mandatory: e.target.value})}
-          className="w-full px-2 py-1 border rounded text-sm"
-        >
-          <option value="YES">✅ YES</option>
-          <option value="NO">🟡 NO</option>
-          <option value="SPECIAL">⚠️ SPECIAL</option>
-        </select>
-      </td>
-      <td className="p-3">
-        <select
-          value={editData.type}
-          onChange={(e) => setEditData({...editData, type: e.target.value})}
-          className="w-full px-2 py-1 border rounded text-sm"
-        >
-          <option value="string">string</option>
-          <option value="number">number</option>
-          <option value="boolean">boolean</option>
-          <option value="object">object</option>
-          <option value="array">array</option>
-        </select>
-      </td>
-      <td className="p-3">
-        <input
-          value={editData.ubl}
-          onChange={(e) => setEditData({...editData, ubl: e.target.value})}
-          className="w-full px-2 py-1 border rounded text-sm"
-        />
-      </td>
-      <td className="p-3">
-        <input
-          value={editData.description}
-          onChange={(e) => setEditData({...editData, description: e.target.value})}
-          className="w-full px-2 py-1 border rounded text-sm"
-        />
-      </td>
-      <td className="p-3">
-        <div className="flex gap-1">
-          <button
-            onClick={() => onSave(editData)}
-            className="text-green-600 hover:text-green-800"
-          >
-            <Save size={16} />
-          </button>
-          <button
-            onClick={onCancel}
-            className="text-gray-600 hover:text-gray-800"
-          >
-            <X size={16} />
-          </button>
-        </div>
-      </td>
-    </>
-  );
-};
-
-export default JsonSchemaDocumentationBuilder;
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            renderFieldsTable();
+            generateDocumentation();
+        });
+    </script>
+</body>
+</html>
