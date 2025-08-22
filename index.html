@@ -473,32 +473,103 @@
     <script>
         // Global state
         let schemaFields = [
-            {
-                id: 1,
-                group: 'invoice',
-                field: 'series',
-                level: 'root',
-                mandatory: 'YES',
-                type: 'string',
-                length: '50',
-                mydata: 'BT-31',
-                ubl: '',
-                description: 'Σειρά παραστατικού|Invoice Series',
-                examples: '"Κ"'
-            },
-            {
-                id: 2,
-                group: 'invoice',
-                field: 'number',
-                level: 'root',
-                mandatory: 'YES',
-                type: 'string',
-                length: '100',
-                mydata: 'BT-32',
-                ubl: '',
-                description: 'Αριθμός Παραστατικού|Invoice Number',
-                examples: '"000002"'
-            }
+            // Root Invoice Fields
+            { id: 1, group: 'invoice', field: 'isDelayedCode', level: 'root', mandatory: 'YES', type: 'number', length: '1', mydata: '', ubl: '', description: 'Αδυναμία Επικοινωνίας Παρόχου ή Αδυναμία Διαβίβασης Δεδομένων από ERP', examples: '0' },
+            { id: 2, group: 'invoice', field: 'series', level: 'root', mandatory: 'YES', type: 'string', length: '50', mydata: 'BT-31', ubl: '', description: 'Σειρά παραστατικού|Invoice Series', examples: '"Κ"' },
+            { id: 3, group: 'invoice', field: 'number', level: 'root', mandatory: 'YES', type: 'string', length: '100', mydata: 'BT-32', ubl: '', description: 'Αριθμός Παραστατικού|Invoice Number', examples: '"000002"' },
+            { id: 4, group: 'invoice', field: 'dateIssued', level: 'root', mandatory: 'YES', type: 'string', length: '19', mydata: 'BT-2', ubl: '', description: 'Ημ. Έκδοσης Παραστατικού|Date Invoice Issuance', examples: '"2024-07-17T23:27:23"' },
+            { id: 5, group: 'invoice', field: 'invoiceTypeCode', level: 'root', mandatory: 'YES', type: 'string', length: '10', mydata: 'BT-3', ubl: '', description: 'Είδος Παραστατικού|Invoice Type', examples: '"1.1"' },
+            { id: 6, group: 'invoice', field: 'invoiceType', level: 'root', mandatory: 'YES', type: 'string', length: '200', mydata: '', ubl: '', description: 'Περιγραφή Παραστατικού|Invoice Description', examples: '"Τιμολόγιο Πώλησης"' },
+            { id: 7, group: 'invoice', field: 'documentTypeCode', level: 'root', mandatory: 'YES', type: 'string', length: '20', mydata: '', ubl: '', description: 'Τύπος Παραστατικού|Type of Invoice', examples: '"INVOICE"' },
+            { id: 8, group: 'invoice', field: 'currency', level: 'root', mandatory: 'NO', type: 'string', length: '50', mydata: 'BT-5', ubl: '', description: 'Περιγραφή νομίσματος|Currency description', examples: '"Euro"' },
+            { id: 9, group: 'invoice', field: 'relativeDocuments', level: 'root', mandatory: 'NO', type: 'array', length: '', mydata: '', ubl: '', description: 'Σχετικά Παραστατικά|Related Documents', examples: '["K-00001", "ΔΑ-00002"]' },
+            { id: 10, group: 'invoice', field: 'correlatedInvoices', level: 'root', mandatory: 'SPECIAL', type: 'array', length: '', mydata: '', ubl: '', description: 'Συσχετιζόμενα Παραστατικά|Associated invoices', examples: '[400001929420636]' },
+            { id: 11, group: 'invoice', field: 'multipleConnectedMarks', level: 'root', mandatory: 'SPECIAL', type: 'array', length: '', mydata: '', ubl: '', description: 'Συσχετιζόμενα Παραστατικά 8.4, 8.5, 8.7, 9.3|Relation to Invoice 8.4, 8.5, 8.7, 9.3', examples: '[400001929420636, 400001929420587]' },
+            { id: 12, group: 'invoice', field: 'gsisRelatedInvoices', level: 'root', mandatory: 'SPECIAL', type: 'string', length: '100', mydata: '', ubl: '', description: 'B2G Συσχετιζόμενα Παραστατικά 5.1|B2G Related Invoice 5.1', examples: '""' },
+            { id: 13, group: 'invoice', field: 'dispatchAdvice', level: 'root', mandatory: 'SPECIAL', type: 'string', length: '50', mydata: '', ubl: '', description: 'Δελτίο Αποστολής|Dispatch Advice', examples: '"ΔΑ-00001"' },
+            { id: 14, group: 'invoice', field: 'selfPricing', level: 'root', mandatory: 'SPECIAL', type: 'boolean', length: '', mydata: '', ubl: '', description: 'Ένδειξη Αυτοτιμολόγησης|Self Pricing Indication', examples: 'false' },
+            { id: 15, group: 'invoice', field: 'isDeliveryNote', level: 'root', mandatory: 'SPECIAL', type: 'boolean', length: '', mydata: '', ubl: '', description: 'Ένδειξη Παραστατικού Διακινισης|Delivery Note Indication', examples: 'false' },
+            { id: 16, group: 'invoice', field: 'isFuelInvoice', level: 'root', mandatory: 'SPECIAL', type: 'boolean', length: '', mydata: '', ubl: '', description: 'Παραστατικό καυσίμων|invoice fuel (indication)', examples: 'false' },
+            { id: 17, group: 'invoice', field: 'vatPaymentSuspension', level: 'root', mandatory: 'SPECIAL', type: 'boolean', length: '', mydata: '', ubl: '', description: 'Αναστολή Καταβολής ΦΠΑ|Suspension of VAT Payment', examples: 'false' },
+            { id: 18, group: 'invoice', field: 'specialInvoiceCategory', level: 'root', mandatory: 'SPECIAL', type: 'number', length: '2', mydata: '', ubl: '', description: 'Ειδική Κατηγορία Παραστατικού|Special Invoice Category', examples: '0' },
+            { id: 19, group: 'invoice', field: 'providerSignatureIdentifier', level: 'root', mandatory: 'SPECIAL', type: 'string', length: '100', mydata: '', ubl: '', description: 'Identifier provided in the signPos', examples: '""' },
+            
+            // Order Fields
+            { id: 20, group: 'order', field: 'orderSeries', level: 'root', mandatory: 'NO', type: 'string', length: '50', mydata: '', ubl: 'BT-13', description: 'Σειρά Παραγγελίας|Order Series', examples: '"A"' },
+            { id: 21, group: 'order', field: 'orderNumber', level: 'root', mandatory: 'NO', type: 'string', length: '100', mydata: '', ubl: 'BT-13', description: 'Order fiscal number', examples: '"5094746384, 8111265034"' },
+            { id: 22, group: 'order', field: 'orderCode', level: 'root', mandatory: 'NO', type: 'string', length: '100', mydata: '', ubl: 'BT-13', description: 'Order Code', examples: '"A 5094746384, A 8111265034"' },
+            { id: 23, group: 'order', field: 'orderConfirmationNumber', level: 'root', mandatory: 'NO', type: 'string', length: '100', mydata: '', ubl: '', description: 'Order Confirmation Number', examples: '"101303"' },
+            { id: 24, group: 'order', field: 'ReferenceCode', level: 'root', mandatory: 'NO', type: 'string', length: '100', mydata: '', ubl: '', description: 'Κωδικός Αναφοράς|Reference Code', examples: '"Z60290075"' },
+            { id: 25, group: 'order', field: 'lotNumber', level: 'root', mandatory: 'NO', type: 'string', length: '100', mydata: '', ubl: '', description: 'Αριθμός Παρτίδας|Lot Number', examples: '"216848465"' },
+
+            // Distribution Details
+            { id: 26, group: 'distribution', field: 'DistributionDetails', level: 'root', mandatory: 'YES', type: 'object', length: '', mydata: '', ubl: '', description: 'Στοιχεία Διακίνησης|Distribution Details', examples: '{}' },
+            { id: 27, group: 'distribution', field: 'InternalDocumentId', level: 'DistributionDetails', mandatory: 'YES', type: 'string', length: '100', mydata: '', ubl: '', description: 'Unique identification number for every INVOICE which is being filled by the company', examples: '"500094746385"' },
+            { id: 28, group: 'distribution', field: 'additionalVehicleNumbers', level: 'DistributionDetails', mandatory: 'SPECIAL', type: 'string', length: '50', mydata: '', ubl: '', description: '2ος Αριθμός Μεταφορικού Μέσου| Λοιπές Λεπτομέρειες Διακίνησης', examples: '""' },
+            { id: 29, group: 'distribution', field: 'dispatchDate', level: 'DistributionDetails', mandatory: 'SPECIAL', type: 'string', length: '10', mydata: '', ubl: '', description: 'Ημερομηνία Έναρξης Αποστολής|Distribution Start Date', examples: '"2025-12-14"' },
+            { id: 30, group: 'distribution', field: 'dispatchTime', level: 'DistributionDetails', mandatory: 'SPECIAL', type: 'string', length: '19', mydata: '', ubl: '', description: 'Ώρα Έναρξης Αποστολής|Distribution Start Time', examples: '"2025-12-14T23:27:23"' },
+            { id: 31, group: 'distribution', field: 'vehileNumber', level: 'DistributionDetails', mandatory: 'SPECIAL', type: 'string', length: '20', mydata: '', ubl: '', description: 'Αριθμός Μεταφορικού Μέσου|Vehicle Number', examples: '"TKN8080"' },
+            { id: 32, group: 'distribution', field: 'movePurposeCode', level: 'DistributionDetails', mandatory: 'SPECIAL', type: 'number', length: '2', mydata: '', ubl: '', description: 'Σκοπός Διακίνησης|Distribution Purpose', examples: '1' },
+            { id: 33, group: 'distribution', field: 'movePurpose', level: 'DistributionDetails', mandatory: 'SPECIAL', type: 'string', length: '100', mydata: '', ubl: '', description: 'Περιγραφή Σκοπός Διακίνησης|Description Distribution Purpose', examples: '"Πώληση/Sale"' },
+            { id: 34, group: 'distribution', field: 'salesman', level: 'DistributionDetails', mandatory: 'NO', type: 'string', length: '100', mydata: '', ubl: '', description: 'Πωλητής|Salesman', examples: '""' },
+
+            // Issuer
+            { id: 35, group: 'issuer', field: 'Issuer', level: 'root', mandatory: 'YES', type: 'object', length: '', mydata: '', ubl: '', description: 'Εκδότης Παραστατικού|Invoice Issuer', examples: '{}' },
+            { id: 36, group: 'issuer', field: 'RegisteredName', level: 'Issuer', mandatory: 'YES', type: 'string', length: '200', mydata: '', ubl: 'BT-27', description: 'Επωνυμία Εκδότη|Issuer Registered Name', examples: '"LMC Demo Company"' },
+            { id: 37, group: 'issuer', field: 'BrandName', level: 'Issuer', mandatory: 'NO', type: 'string', length: '100', mydata: '', ubl: '', description: 'Εμπορική Επωνυμία|Brand Name', examples: '"LMC"' },
+            { id: 38, group: 'issuer', field: 'Code', level: 'Issuer', mandatory: 'NO', type: 'string', length: '20', mydata: '', ubl: '', description: 'Κωδικός Εταιρείας|Corporate Code', examples: '"3750"' },
+            { id: 39, group: 'issuer', field: 'Vat', level: 'Issuer', mandatory: 'YES', type: 'string', length: '20', mydata: '', ubl: 'BT-31', description: 'ΑΦΜ Εκδότη | Company\'s VAT', examples: '"EL110099934"' },
+            { id: 40, group: 'issuer', field: 'TaxOffice', level: 'Issuer', mandatory: 'NO', type: 'string', length: '100', mydata: '', ubl: '', description: 'Δ.Ο.Υ. Εκδότη|Tax Office', examples: '"ΦΑΕ ΑΘΗΝΩΝ"' },
+            { id: 41, group: 'issuer', field: 'activities', level: 'Issuer', mandatory: 'NO', type: 'array', length: '', mydata: '', ubl: '', description: 'Δραστηριότητες|Activities', examples: '["ΕΜΠΟΡΙΚΗ ΕΤΑΙΡΕΙΑ"]' },
+
+            // Counterparty
+            { id: 42, group: 'counterparty', field: 'counterParty', level: 'root', mandatory: 'YES', type: 'object', length: '', mydata: '', ubl: '', description: 'Λήπτης Παραστατικού|Invoice Recipient', examples: '{}' },
+            { id: 43, group: 'counterparty', field: 'Code', level: 'counterParty', mandatory: 'NO', type: 'string', length: '50', mydata: '', ubl: '', description: 'Customer\'s Code', examples: '"30-00-0100"' },
+            { id: 44, group: 'counterparty', field: 'registeredName', level: 'counterParty', mandatory: 'YES', type: 'string', length: '200', mydata: '', ubl: 'BT-44', description: 'Επωνυμία Λήπτη|Buyer Name', examples: '"ΤΕΣΤ ΠΕΛΑΤΗΣ"' },
+            { id: 45, group: 'counterparty', field: 'Vat', level: 'counterParty', mandatory: 'YES', type: 'string', length: '20', mydata: '', ubl: 'BT-48', description: 'ΑΦΜ Λήπτη|Buyer VAT', examples: '"EL800654765"' },
+
+            // Payment Details
+            { id: 46, group: 'payment', field: 'PaymentDetails', level: 'root', mandatory: 'YES', type: 'object', length: '', mydata: '', ubl: '', description: 'Τρόποι Πληρωμής|Payment Methods', examples: '{}' },
+            { id: 47, group: 'payment', field: 'paymentDate', level: 'PaymentDetails', mandatory: 'NO', type: 'string', length: '10', mydata: '', ubl: 'BT-9', description: 'Ημερομηνία Πληρωμής|Payment Date', examples: '"2025-12-14"' },
+            { id: 48, group: 'payment', field: 'exchangeCurrencyRate', level: 'PaymentDetails', mandatory: 'SPECIAL', type: 'number', length: '10', mydata: '', ubl: '', description: 'Ισοτιμία|Currency rate', examples: '1.00000' },
+            { id: 49, group: 'payment', field: 'PaymentMethods', level: 'PaymentDetails', mandatory: 'YES', type: 'array', length: '', mydata: '', ubl: '', description: 'Μέθοδοι Πληρωμής|Payment Methods Array', examples: '[{}]' },
+            { id: 50, group: 'payment', field: 'paymentMethodTypeCode', level: 'PaymentMethods', mandatory: 'YES', type: 'number', length: '2', mydata: '', ubl: 'BT-81', description: 'Τύπος Πληρωμής|Payment Method Type Code', examples: '5' },
+            { id: 51, group: 'payment', field: 'amount', level: 'PaymentMethods', mandatory: 'YES', type: 'number', length: '15', mydata: '', ubl: 'BT-115', description: 'Ποσό Πληρωμής|Payment Amount', examples: '334.83' },
+
+            // Additional Details
+            { id: 52, group: 'additional', field: 'additionalDetails', level: 'root', mandatory: 'YES', type: 'object', length: '', mydata: '', ubl: '', description: 'Πρόσθετες Λεπτομέρειες|Additional Details', examples: '{}' },
+            { id: 53, group: 'additional', field: 'transmissionMethod', level: 'additionalDetails', mandatory: 'YES', type: 'string', length: '1', mydata: '', ubl: '', description: 'Μέθοδος Αποστολής|Transmission Method', examples: '"A"' },
+            { id: 54, group: 'additional', field: 'avoidEmailGrouping', level: 'additionalDetails', mandatory: 'YES', type: 'boolean', length: '', mydata: '', ubl: '', description: 'Αποφυγή Ομαδοποίησης Email|Avoid Email Grouping', examples: 'false' },
+
+            // Details (Lines)
+            { id: 55, group: 'details', field: 'details', level: 'root', mandatory: 'YES', type: 'array', length: '', mydata: '', ubl: '', description: 'Γραμμές Παραστατικού|Invoice Lines', examples: '[{}]' },
+            { id: 56, group: 'details', field: 'lineNo', level: 'details', mandatory: 'YES', type: 'number', length: '5', mydata: '', ubl: 'BT-126', description: 'ΑΑ γραμμής|Line Number', examples: '1' },
+            { id: 57, group: 'details', field: 'RecordTypeCode', level: 'details', mandatory: 'YES', type: 'number', length: '1', mydata: '', ubl: '', description: 'Είδος Γραμμής|Record Type', examples: '0' },
+            { id: 58, group: 'details', field: 'quantity', level: 'details', mandatory: 'SPECIAL', type: 'number', length: '15', mydata: '', ubl: 'BT-129', description: 'Ποσότητα|Quantity', examples: '1.00000' },
+            { id: 59, group: 'details', field: 'code', level: 'details', mandatory: 'NO', type: 'string', length: '50', mydata: '', ubl: 'BT-155', description: 'Κωδικός Είδους|Line\'s Code', examples: '"251320104"' },
+            { id: 60, group: 'details', field: 'descriptions', level: 'details', mandatory: 'YES', type: 'array', length: '', mydata: '', ubl: 'BT-153', description: 'Περιγραφή Είδους|Item Description', examples: '["ITEM 1"]' },
+            { id: 61, group: 'details', field: 'UnitPrice', level: 'details', mandatory: 'YES', type: 'number', length: '15', mydata: '', ubl: 'BT-146', description: 'Τιμή Μονάδας|Unit Price', examples: '18.45' },
+            { id: 62, group: 'details', field: 'netTotal', level: 'details', mandatory: 'YES', type: 'number', length: '15', mydata: '', ubl: 'BT-131', description: 'Line\'s totalNetAmount', examples: '52.76' },
+            { id: 63, group: 'details', field: 'vatTotal', level: 'details', mandatory: 'YES', type: 'number', length: '15', mydata: '', ubl: 'BT-117', description: 'Line\'s totalVATAmount', examples: '3.16' },
+            { id: 64, group: 'details', field: 'total', level: 'details', mandatory: 'YES', type: 'number', length: '15', mydata: '', ubl: 'BT-131', description: 'Line\'s totalGrossValue', examples: '55.92' },
+            { id: 65, group: 'details', field: 'vatCategory', level: 'details', mandatory: 'YES', type: 'string', length: '10', mydata: '', ubl: 'BT-118', description: 'Κατηγορία ΦΠΑ|VAT Category', examples: '"6%"' },
+            { id: 66, group: 'details', field: 'vatCategoryCode', level: 'details', mandatory: 'YES', type: 'number', length: '2', mydata: '', ubl: 'BT-118', description: 'TAX CATEGORY', examples: '3' },
+
+            // Summaries
+            { id: 67, group: 'summaries', field: 'summaries', level: 'root', mandatory: 'YES', type: 'object', length: '', mydata: '', ubl: '', description: 'Περίληψη|Invoice Summary', examples: '{}' },
+            { id: 68, group: 'summaries', field: 'totalNetAmount', level: 'summaries', mandatory: 'YES', type: 'number', length: '15', mydata: '', ubl: 'BT-106', description: 'Total Net Amount of the Invoice', examples: '315.88' },
+            { id: 69, group: 'summaries', field: 'totalVATAmount', level: 'summaries', mandatory: 'YES', type: 'number', length: '15', mydata: '', ubl: 'BT-110', description: 'Total VAT Amount of the Invoice', examples: '18.95' },
+            { id: 70, group: 'summaries', field: 'totalGrossValue', level: 'summaries', mandatory: 'YES', type: 'number', length: '15', mydata: '', ubl: 'BT-112', description: 'Total Gross Amount of the Invoice', examples: '334.83' },
+
+            // VAT Analysis
+            { id: 71, group: 'vat', field: 'vatAnalysis', level: 'root', mandatory: 'YES', type: 'array', length: '', mydata: '', ubl: '', description: 'Ανάλυση ΦΠΑ|VAT Analysis', examples: '[{}]' },
+            { id: 72, group: 'vat', field: 'name', level: 'vatAnalysis', mandatory: 'YES', type: 'string', length: '10', mydata: '', ubl: '', description: 'Description of the Percentage of the VAT', examples: '"6%"' },
+            { id: 73, group: 'vat', field: 'percentage', level: 'vatAnalysis', mandatory: 'YES', type: 'number', length: '5', mydata: '', ubl: '', description: 'Number of the percentage of the VAT', examples: '6' },
+
+            // Banks
+            { id: 74, group: 'banks', field: 'banks', level: 'root', mandatory: 'NO', type: 'array', length: '', mydata: '', ubl: '', description: 'Associated Banks', examples: '[{}]' },
+            { id: 75, group: 'banks', field: 'bicCode', level: 'banks', mandatory: 'NO', type: 'string', length: '11', mydata: '', ubl: 'BT-84', description: 'BIC Code', examples: '"CITIGRAA"' },
+            { id: 76, group: 'banks', field: 'iban', level: 'banks', mandatory: 'NO', type: 'string', length: '34', mydata: '', ubl: 'BT-84', description: 'IBAN', examples: '"GR92 0000 0000 0000 0000 0000 000"' }
         ];
 
         let editingId = null;
