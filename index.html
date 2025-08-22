@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JSON Schema Documentation Builder</title>
+    <!-- External Libraries for Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -154,6 +158,15 @@
 
         .btn-danger:hover {
             background-color: #b91c1c;
+        }
+
+        .btn-warning {
+            background-color: #d97706;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background-color: #b45309;
         }
 
         .btn:disabled {
@@ -441,7 +454,17 @@
 
             <!-- Documentation Preview Tab -->
             <div id="preview" class="tab-content">
-                <h3 style="margin-bottom: 24px;">Schema Documentation Preview</h3>
+                <div class="toolbar">
+                    <h3>Schema Documentation Preview</h3>
+                    <div class="toolbar-group">
+                        <button class="btn btn-warning" onclick="exportToPDF()">
+                            📄 Export PDF
+                        </button>
+                        <button class="btn btn-success" onclick="exportToExcel()">
+                            📊 Export Excel
+                        </button>
+                    </div>
+                </div>
                 <div id="documentationContent"></div>
             </div>
         </div>
@@ -847,6 +870,7 @@
                                         <th style="padding: 8px;">Type</th>
                                         <th style="padding: 8px;">Length</th>
                                         <th style="padding: 8px;">MyData</th>
+                                        <th style="padding: 8px;">UBL</th>
                                         <th style="padding: 8px;">Description</th>
                                         <th style="padding: 8px;">Example</th>
                                     </tr>
@@ -863,10 +887,11 @@
                             <td style="padding: 8px;" class="field-code">${field.field}</td>
                             <td style="padding: 8px;">${requiredIcon}</td>
                             <td style="padding: 8px;"><span class="code">${field.type}</span></td>
-                            <td style="padding: 8px;">${field.length}</td>
-                            <td style="padding: 8px;" class="mydata-code">${field.mydata}</td>
+                            <td style="padding: 8px;">${field.length || ''}</td>
+                            <td style="padding: 8px;" class="mydata-code">${field.mydata || ''}</td>
+                            <td style="padding: 8px;">${field.ubl || ''}</td>
                             <td style="padding: 8px;">${field.description}</td>
-                            <td style="padding: 8px;" class="example-code">${field.examples}</td>
+                            <td style="padding: 8px;" class="example-code">${field.examples || ''}</td>
                         </tr>
                     `;
                 });
@@ -880,6 +905,176 @@
             });
             
             content.innerHTML = html;
+        }
+
+        // Export functions
+        function exportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('l', 'mm', 'a4'); // landscape orientation
+            
+            // Add title
+            doc.setFontSize(20);
+            doc.text('JSON Schema Documentation', 20, 20);
+            
+            // Add generation date
+            doc.setFontSize(10);
+            doc.text(`Generated on: ${new Date().toLocaleDateString('el-GR')}`, 20, 30);
+            
+            let currentY = 45;
+            const groups = [...new Set(schemaFields.map(f => f.group))];
+            
+            groups.forEach((group, groupIndex) => {
+                if (!group) return;
+                
+                const groupFields = schemaFields.filter(f => f.group === group);
+                
+                // Add group title
+                doc.setFontSize(14);
+                doc.setFont(undefined, 'bold');
+                doc.text(group.toUpperCase(), 20, currentY);
+                currentY += 10;
+                
+                // Prepare table data
+                const tableData = groupFields.map(field => [
+                    field.field,
+                    field.mandatory === 'YES' ? 'Mandatory' : field.mandatory === 'NO' ? 'Optional' : 'Special',
+                    field.type,
+                    field.length || '',
+                    field.mydata || '',
+                    field.ubl || '',
+                    field.description,
+                    field.examples || ''
+                ]);
+                
+                // Add table
+                doc.autoTable({
+                    startY: currentY,
+                    head: [['JSON Field', 'Required', 'Type', 'Length', 'MyData', 'UBL', 'Description', 'Example']],
+                    body: tableData,
+                    styles: {
+                        fontSize: 8,
+                        cellPadding: 2,
+                    },
+                    headStyles: {
+                        fillColor: [64, 64, 64],
+                        textColor: [255, 255, 255],
+                        fontStyle: 'bold'
+                    },
+                    alternateRowStyles: {
+                        fillColor: [245, 245, 245]
+                    },
+                    columnStyles: {
+                        0: { fontStyle: 'bold', textColor: [37, 99, 235] }, // JSON Field
+                        4: { fontStyle: 'bold', textColor: [124, 58, 237] }, // MyData
+                        7: { fontStyle: 'bold', textColor: [5, 150, 105] }   // Example
+                    },
+                    margin: { left: 20, right: 20 },
+                    pageBreak: 'auto',
+                });
+                
+                currentY = doc.lastAutoTable.finalY + 15;
+                
+                // Add new page if needed for next group
+                if (groupIndex < groups.length - 1 && currentY > 180) {
+                    doc.addPage();
+                    currentY = 20;
+                }
+            });
+            
+            // Save the PDF
+            doc.save('schema-documentation.pdf');
+        }
+
+        function exportToExcel() {
+            // Create a new workbook
+            const wb = XLSX.utils.book_new();
+            
+            // Create overview sheet with all data
+            const allData = [
+                ['Group', 'JSON Field', 'Level', 'Required', 'Type', 'Length', 'MyData', 'UBL', 'Description', 'Example']
+            ];
+            
+            schemaFields.forEach(field => {
+                allData.push([
+                    field.group,
+                    field.field,
+                    field.level,
+                    field.mandatory === 'YES' ? 'Mandatory' : field.mandatory === 'NO' ? 'Optional' : 'Special',
+                    field.type,
+                    field.length || '',
+                    field.mydata || '',
+                    field.ubl || '',
+                    field.description,
+                    field.examples || ''
+                ]);
+            });
+            
+            const ws_overview = XLSX.utils.aoa_to_sheet(allData);
+            
+            // Set column widths
+            const colWidths = [
+                { wch: 15 }, // Group
+                { wch: 20 }, // JSON Field
+                { wch: 10 }, // Level
+                { wch: 12 }, // Required
+                { wch: 10 }, // Type
+                { wch: 10 }, // Length
+                { wch: 15 }, // MyData
+                { wch: 15 }, // UBL
+                { wch: 40 }, // Description
+                { wch: 20 }  // Example
+            ];
+            ws_overview['!cols'] = colWidths;
+            
+            // Add overview sheet
+            XLSX.utils.book_append_sheet(wb, ws_overview, 'Overview');
+            
+            // Create separate sheets for each group
+            const groups = [...new Set(schemaFields.map(f => f.group))];
+            
+            groups.forEach(group => {
+                if (!group) return;
+                
+                const groupFields = schemaFields.filter(f => f.group === group);
+                const groupData = [
+                    ['JSON Field', 'Required', 'Type', 'Length', 'MyData', 'UBL', 'Description', 'Example']
+                ];
+                
+                groupFields.forEach(field => {
+                    groupData.push([
+                        field.field,
+                        field.mandatory === 'YES' ? 'Mandatory' : field.mandatory === 'NO' ? 'Optional' : 'Special',
+                        field.type,
+                        field.length || '',
+                        field.mydata || '',
+                        field.ubl || '',
+                        field.description,
+                        field.examples || ''
+                    ]);
+                });
+                
+                const ws_group = XLSX.utils.aoa_to_sheet(groupData);
+                
+                // Set column widths for group sheets
+                const groupColWidths = [
+                    { wch: 20 }, // JSON Field
+                    { wch: 12 }, // Required
+                    { wch: 10 }, // Type
+                    { wch: 10 }, // Length
+                    { wch: 15 }, // MyData
+                    { wch: 15 }, // UBL
+                    { wch: 40 }, // Description
+                    { wch: 20 }  // Example
+                ];
+                ws_group['!cols'] = groupColWidths;
+                
+                // Sanitize sheet name (Excel has limitations)
+                const sheetName = group.replace(/[\\\/\?\*\[\]]/g, '_').substring(0, 31);
+                XLSX.utils.book_append_sheet(wb, ws_group, sheetName);
+            });
+            
+            // Save the Excel file
+            XLSX.writeFile(wb, 'schema-documentation.xlsx');
         }
 
         // Initialize the application
